@@ -1,0 +1,284 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Jade Delight</title>
+<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  
+<script language="javascript">
+
+// the following is the given js code:
+function MenuItem(name, cost)
+{
+	this.name = name;
+	this.cost=cost;
+}
+
+menuItems = new Array(
+	new MenuItem("Chicken Chop Suey", 4.5),
+	new MenuItem("Sweet and Sour Pork", 6.25),
+	new MenuItem("Shrimp Lo Mein", 5.25),
+	new MenuItem("Moo Shi Chicken", 6.5),
+	new MenuItem("Fried Rice", 2.35)
+);
+
+function makeSelect(name, minRange, maxRange)
+{
+	var t= "";
+	t = "<select name='" + name + "' size='1'>";
+	for (j=minRange; j<=maxRange; j++)
+	   t += "<option>" + j + "</option>";
+	t+= "</select>";
+	return t;
+}
+
+//my code
+var cost_to = [0,0,0,0,0];
+var isValid = true;
+
+//print the item cost with name generalized by wildcard
+
+  $(document).ready(function(){
+    $("select[name^=quan]").change(function(){
+      var id_num = $(this).attr("name").replace(/quan/, "");
+      var item = $("select[name= quan" + id_num+ "]").val();
+      var price = menuItems[id_num].cost.toFixed(2);
+      cost_to[id_num] = item * price;
+      cost_to_rounded = cost_to[id_num].toFixed(2);
+      $('input[name=cost]:eq(' + id_num + ')').val(cost_to_rounded);
+      
+      var subtotal = 0;
+      for(i = 0; i < 5; i++){
+        subtotal = subtotal + cost_to[i];
+      }
+      subtotal_rounded = subtotal.toFixed(2);
+      $("input[name=subtotal]").val(subtotal_rounded);
+      
+      var tax = 0;
+      for(i = 0; i < 5; i++){
+        tax = subtotal_rounded * 0.0625;
+      }
+      tax_rounded = tax.toFixed(2);
+      $("input[name=tax]").val(tax_rounded);
+      
+      var total = 0;
+      for(i = 0; i < 5; i++){
+        total_amount = subtotal + tax;
+      }
+      total_rounded = total_amount.toFixed(2);
+      $("input[name=total]").val(total_rounded);
+    });
+  });
+
+
+
+//hide the street and city for pickup
+$(document).ready(function(){
+  if( $('input[name=p_or_d]:first:checked', 'form').val() == "pickup"){
+    // alert($('input[name=p_or_d]:eq(1):checked', 'form').val());
+    $("input[name=street]").hide();
+    $("input[name=city]").hide();
+    $("p:eq(2)").hide();
+    $("p:eq(3)").hide();
+  } 
+  $('input[name=p_or_d]', 'form').click(function() {
+    $('input[name=p_or_d]:first:checked', 'form').val() === undefined;
+    $("input[name=street]").show();
+    $("input[name=city]").show();
+    $("p:eq(2)").show();
+    $("p:eq(3)").show();
+  // $('#target_area').show().find('input, textarea').prop('disabled', false);
+});
+  $('input[name=p_or_d]:first', 'form').click(function() {
+    $("input[name=street]").hide();
+    $("input[name=city]").hide();
+    $("p:eq(2)").hide();
+    $("p:eq(3)").hide();
+  // $('#target_area').show().find('input, textarea').prop('disabled', false);
+  });
+})
+
+
+//when the user clicks submit button
+
+function calTotalCost(){
+  
+  //verify the last name
+  var last_name = $("input[name=lname]").val();
+  if (last_name.match('^[a-zA-Z]{2,16}$')) {
+    alert( "Great! Your last name is valid." );
+  } else if(last_name == ""){
+    alert("Your last name cannot be empty.");
+    isValid = false;
+  } else {
+    alert("Oops, that's not a name (Your name must be more than 1 digit)");
+    isValid = false;
+  }
+  
+  //verify phone number
+  //my pogram only validates if the number is a 10 digit number
+  var phone_num = $("input[name=phone]").val();
+  if (phone_num == "") {
+    alert( "Your phone number cannot be empty." );
+    isValid = false;
+  } else if(phone_num.match(/^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/)){
+    alert("Great! Your phone number is valid!");
+  }
+  else {
+    alert("Oops, that's not a phone number.");
+    isValid = false;
+  }
+  
+  //if the order is pickup/delivery, calculate the time of order to be ready
+  var d = new Date($.now());
+  if ($('input[name=p_or_d]:eq(0):checked', 'form').val() == "pickup") {
+    var future = new Date(d.getTime() + 15*60000);
+    var time_ready = future.getDate()+"-"+(future.getMonth() + 1)+"-"+future.getFullYear()+" "+future.getHours()+":"+future.getMinutes()+":"+future.getSeconds();
+    // alert(time_ready);
+  }
+  else if($('input[name=p_or_d]:eq(1):checked', 'form').val() == "delivery") {
+    var future = new Date(d.getTime() + 30*60000);
+    var time_ready = future.getDate()+"-"+(future.getMonth() + 1)+"-"+future.getFullYear()+" "+future.getHours()+":"+future.getMinutes()+":"+future.getSeconds();
+    // alert(time_ready);
+  }
+
+   //if the order is delivery, the street and city are required
+   if($('input[name=p_or_d]:eq(1):checked', 'form').val() == "delivery"){
+     if($("input[name=street]").val() =="" || $("input[name=city]").val() == ""){
+       alert("Both STREET and CITY are required for delivery!");
+       isValid = false;
+     }
+   }
+
+   //at least one item must be ordered
+   food_item = [0,0,0,0,0];
+   for(i = 0; i<5; i++){
+     food_item[i] = $("select[name= quan" + i+ "]").val();
+     if(food_item == [0,0,0,0,0]){
+       alert("Wait! Please select at least one item.");
+       isValid = false;
+     }
+   }
+   
+   //display a message if there are no validation issues
+   //thanks, display the order, the time ready, the total cost
+   if(isValid){
+     food_name = [];
+     food_quantity = [];
+     order = "";
+     for(i = 0; i < 5; i++){
+       food_name[i] = menuItems[i].name;
+       food_quantity[i] = $("select[name= quan" + i+ "]").val();
+       order = order + food_quantity[i] + " " + food_name[i] + ", ";
+     }
+       
+     final = "Thank you for ordering with Jade Delight! You have ordered " + order
+            + "and your food will be ready at " + time_ready 
+            + ". The total cost of your order is: $" + $("input[name=total]").val() + ".";
+     alert(final);
+
+   }
+ }
+
+
+// try to print the item one by one - gave up in the middle
+// //print the cost for the second item
+// $(document).ready(function(){
+//   $("select[name=quan1]").change(function(){
+//     var item1 = $("select[name=quan1]").val();
+//     cost1 = item1 * 6.25;
+//     $('input[name=cost]:eq(1)').val(cost1);
+//     var subtotal = cost0 + cost1 + cost2 + cost3 + cost4;
+//     $("input[name=subtotal]").val(subtotal);
+//   });
+// });
+// 
+// //print the cost for the third item
+// $(document).ready(function(){
+//   $("select[name=quan2]").change(function(){
+//     var item2 = $("select[name=quan2]").val();
+//     cost2 = item2 * 5.25;
+//     $('input[name=cost]:eq(2)').val(cost2);
+//     var subtotal = cost0 + cost1 + cost2 + cost3 + cost4;
+//     $("input[name=subtotal]").val(subtotal);
+//   });
+// });
+// 
+// //print the cost for the fourth item
+// $(document).ready(function(){
+//   $("select[name=quan3]").change(function(){
+//     var item3 = $("select[name=quan3]").val();
+//     cost3 = item3 * 6.5;
+//     $('input[name=cost]:eq(3)').val(cost3);
+//     var subtotal = cost0 + cost1 + cost2 + cost3 + cost4;
+//     $("input[name=subtotal]").val(subtotal);
+//   });
+// });
+// 
+// //print the cost for the fifth item
+// $(document).ready(function(){
+//   $("select[name=quan4]").change(function(){
+//     var item4 = $("select[name=quan4]").val();
+//     cost4 = item4 * 2.35;
+//     $('input[name=cost]:eq(4)').val(cost4);
+//     var subtotal = cost0 + cost1 + cost2 + cost3 + cost4;
+//     $("input[name=subtotal]").val(subtotal);
+//   });
+// });
+// 
+
+</script>
+
+
+<h1>Jade Delight</h1>
+<form>
+
+<p>First Name: <input type="text"  name='fname' /></p>
+<p>Last Name*:  <input type="text"  name='lname' /></p>
+<p>Street: <input type="text"  name='street' /></p>
+<p>City: <input type="text"  name='city' /></p>
+<p>Phone*: <input type="text"  name='phone' /></p>
+<p> 
+	<input type="radio"  name="p_or_d" value = "pickup" checked="checked"/>Pickup  
+	<input type="radio"  name='p_or_d' value = 'delivery'/>
+	Delivery
+</p>
+<table border="0" cellpadding="3">
+  <tr>
+    <th>Select Item</th>
+    <th>Item Name</th>
+    <th>Cost Each</th>
+    <th>Total Cost</th>
+  </tr>
+<script language="javascript">
+
+  var s = "";
+  for (i=0; i< menuItems.length; i++)
+  {
+	  s += "<tr><td>";
+	  s += makeSelect("quan" + i, 0, 10);
+	  s += "</td><td>" + menuItems[i].name + "</td>";
+	  s += "<td> $ " + menuItems[i].cost.toFixed(2) + "</td>";
+	  s += "<td>$<input type='text' name='cost' id='total_cost'/></td></tr>";
+  }
+  document.writeln(s);
+</script>
+</table> 
+<p>Subtotal:  
+   $<input type="text"  name='subtotal' id="subtotal" /> 
+</p> 
+<p>Mass tax 6.25%: 
+  $ <input type="text"  name='tax' id="tax" /> 
+</p> 
+<p>Total: $ <input type="text"  name='total' id="total" /> 
+</p> 
+
+<input type = "button" value = "Submit Order" onclick="calTotalCost()" /> 
+
+</form> 
+</body>  
+</html>
